@@ -1,2 +1,0 @@
-# Kapita
-Matkul Kapita Selekta

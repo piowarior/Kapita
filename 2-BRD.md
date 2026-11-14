@@ -21,11 +21,13 @@ Klinik Darus Syifa Holistik (DSH), berdasarkan informasi awal, masih menggunakan
 
 Karakteristik tersebut menjadi dasar kebutuhan sistem yang tidak hanya berfungsi sebagai media pencatatan data, tetapi juga mampu mengelola rangkaian aktivitas monitoring yang berlangsung dalam jangka waktu tertentu. Dalam pelaksanaannya, instruksi aktivitas dapat mengalami perubahan atau pembatalan, pasien dapat mengirimkan laporan pada waktu yang berbeda, dan proses monitoring perlu memiliki mekanisme penanganan apabila terjadi gangguan teknis.
 
-Penelitian ini mengusulkan sistem monitoring perkembangan pasien yang terdiri atas aplikasi web untuk petugas klinik dan aplikasi mobile untuk pasien. Sistem menerapkan **Event-Driven Architecture (EDA)** untuk komunikasi antarbagian sistem melalui event, serta **Durable Workflow Orchestration menggunakan Temporal** untuk mengelola siklus workflow, termasuk penjadwalan, pengingat, waktu tunggu laporan pasien, perubahan instruksi, pembatalan, retry, dan pemulihan proses setelah gangguan.
+Penelitian ini mengusulkan sistem monitoring perkembangan pasien yang terdiri atas aplikasi web untuk petugas klinik dan aplikasi mobile untuk pasien. Sistem mencakup pengelolaan data pasien, kunjungan, hasil pemeriksaan, instruksi aktivitas mandiri, laporan aktivitas, dan informasi perkembangan pasien. **Event-Driven Architecture (EDA)** diterapkan untuk menghubungkan kejadian antarbagian sistem melalui event, sedangkan **Durable Workflow Orchestration** menggunakan **Temporal** difokuskan pada pengelolaan workflow monitoring aktivitas mandiri pasien yang membutuhkan penjadwalan, waktu tunggu, pengelolaan laporan, perubahan instruksi, pembatalan, retry, dan pemulihan proses setelah gangguan.
+
+Data pasien, kunjungan, pemeriksaan, instruksi aktivitas, dan laporan tetap disimpan pada basis data aplikasi. Event digunakan untuk menyampaikan kejadian bisnis yang relevan antarbagian sistem. Temporal mengelola siklus workflow monitoring aktivitas mandiri, bukan keseluruhan proses pelayanan klinik seperti pemeriksaan dan penentuan terapi.
 
 Data pasien, kunjungan, pemeriksaan, instruksi aktivitas, dan laporan tetap disimpan pada basis data aplikasi. Event digunakan untuk menyampaikan kejadian bisnis yang relevan, sedangkan Temporal mengelola eksekusi workflow yang membutuhkan penjadwalan dan waktu tunggu dalam jangka panjang.
 
-Keberhasilan sistem akan dievaluasi melalui pengujian fungsional, pemrosesan event, ketepatan alur workflow, penanganan perubahan, serta pemulihan setelah gangguan. Evaluasi juga dapat membandingkan pendekatan workflow konvensional menggunakan Laravel Queue dan Scheduler dengan pendekatan EDA dan Temporal berdasarkan skenario pengujian yang sama. Perbandingan tersebut bertujuan mengidentifikasi perbedaan karakteristik kedua pendekatan, bukan mengasumsikan bahwa salah satunya pasti lebih unggul pada seluruh aspek.
+Keberhasilan sistem akan dievaluasi melalui pengujian fungsional, pemrosesan event, ketepatan alur workflow, penanganan perubahan instruksi, pengelolaan laporan, serta pemulihan workflow setelah gangguan. Selain pengujian teknis, evaluasi usability dilakukan menggunakan kuesioner System Usability Scale (SUS) untuk memperoleh penilaian pengguna terhadap kemudahan penggunaan aplikasi.
 
 # 2. Business Objectives & Success Metrics (SMART)
 
@@ -77,23 +79,22 @@ Pengembangan sistem mencakup:
 - Penayangan laporan dan status aktivitas kepada petugas.
 - Penayangan ringkasan instruksi aktif dan riwayat laporan pada dashboard pasien.
 
-**D. Event-Driven Architecture**
+**D. Integrasi Event-Driven Architecture**
 
-- Penerbitan event ketika terjadi perubahan bisnis yang relevan, seperti instruksi dibuat, diperbarui, dibatalkan, dan laporan diterima.
-- Penerimaan dan pemrosesan event oleh komponen sistem.
+- Penerbitan event ketika terjadi perubahan bisnis yang relevan pada modul sistem, seperti pasien dibuat, kunjungan dicatat, hasil pemeriksaan disimpan, instruksi dibuat, diperbarui, dibatalkan, dan laporan diterima.
+- Penerimaan dan pemrosesan event oleh komponen sistem yang berkepentingan.
 - Pengelolaan konsistensi antara penyimpanan data dan penerbitan event.
 - Penerapan mekanisme idempotensi untuk mencegah efek bisnis ganda akibat pemrosesan event berulang.
 
-**E. Durable Workflow Orchestration**
+**E. Durable Workflow Orchestration Menggunakan Temporal**
 
-- Inisialisasi workflow Temporal berdasarkan instruksi aktivitas yang telah disimpan.
-- Pengelolaan timer dan jadwal pengingat.
-- Pengelolaan waktu tunggu laporan pasien.
+- Inisialisasi workflow Temporal berdasarkan instruksi aktivitas mandiri pasien yang telah disimpan.
+- Pengelolaan timer, jadwal pengingat, dan waktu tunggu laporan pasien.
 - Penerimaan laporan pasien sebagai pemicu kelanjutan workflow.
-- Penyesuaian workflow ketika instruksi diperbarui.
-- Pembatalan workflow ketika instruksi dibatalkan.
+- Penyesuaian workflow ketika instruksi aktivitas diperbarui.
+- Pembatalan workflow ketika instruksi aktivitas dibatalkan.
 - Retry untuk aktivitas teknis yang gagal sesuai kebijakan.
-- Pemulihan workflow setelah worker atau layanan terkait mengalami gangguan.
+- Pemulihan workflow setelah worker mengalami gangguan dan kembali tersedia.
 
 **F. Pengujian dan Evaluasi**
 
@@ -110,31 +111,26 @@ Pengembangan sistem mencakup:
 
 Hal-hal berikut tidak termasuk dalam ruang lingkup penelitian:
 
-- Diagnosis medis otomatis dan rekomendasi terapi otomatis.
-- Artificial Intelligence (AI) dan Machine Learning (ML).
-- Pengembangan sistem rekam medis elektronik lengkap atau penggantian seluruh sistem operasional klinik.
-- Pengelolaan resep, farmasi, stok obat, pembelian, dan persediaan.
-- Pembayaran, kasir, tagihan, klaim, dan akuntansi.
-- Integrasi dengan laboratorium, rumah sakit, perangkat medis, smartwatch, atau platform kesehatan eksternal.
-- Telekonsultasi video dan layanan konsultasi real-time.
-- Penentuan instruksi aktivitas pasien secara otomatis oleh sistem.
-- Validasi medis terhadap instrumen pemeriksaan, diagnosis, atau ambang batas klinis.
-- Pengambilan keputusan medis oleh sistem.
-- Pengembangan infrastruktur microservices berskala besar atau cluster Kubernetes yang tidak diperlukan untuk evaluasi penelitian.
+- Pengujian fungsional aplikasi.
+- Pengujian penerbitan dan pemrosesan event.
+- Pengujian urutan dan transisi workflow.
+- Pengujian timer dan pemicu pengingat.
+- Pengujian laporan, perubahan, dan pembatalan instruksi.
+- Pengujian event duplikat dan idempotensi.
+- Pengujian retry dan pemulihan workflow.
+- Pengujian integrasi antara komponen aplikasi, event, dan Temporal.
+- Evaluasi usability sistem menggunakan kuesioner System Usability Scale (SUS) kepada petugas klinik dan pasien setelah menggunakan aplikasi.
 
 # 4. Stakeholder Analysis
 
 | Stakeholder                    | Peran                                                                                                  | Kepentingan                                                                                | Influence |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ | --------- |
-| Pemilik / Pimpinan Klinik      | Pemilik proses dan pihak yang memberikan persetujuan penggunaan sistem serta pelaksanaan penelitian.   | Kesesuaian sistem dengan kebutuhan dan kebijakan klinik.                                   | Tinggi    |
-| Petugas Klinik / Operator      | Pengguna aplikasi web untuk mengelola pasien, kunjungan, pemeriksaan, dan instruksi sesuai kewenangan. | Kemudahan pencatatan, pengelolaan jadwal, dan pemantauan laporan.                          | Tinggi    |
-| Pasien Umum                    | Penerima layanan yang data dan riwayat kunjungannya dikelola sesuai ruang lingkup sistem.              | Informasi dan riwayat yang akurat serta terlindungi.                                       | Sedang    |
-| Pasien Program MHLS            | Pengguna aplikasi mobile untuk melihat instruksi aktivitas dan mengirim laporan pelaksanaan.           | Instruksi yang jelas, pengingat sesuai jadwal, dan kemudahan pelaporan.                    | Sedang    |
-| Pihak Klinik Pemberi Instruksi | Pihak yang menetapkan, memperbarui, atau membatalkan instruksi aktivitas sesuai kewenangan klinis.     | Instruksi tercatat dengan benar dan perubahan diterapkan pada proses monitoring.           | Tinggi    |
+| Pemilik  Klinik /Admin      | Pihak klinik yang bertanggung jawab atas pengelolaan dan penggunaan sistem, termasuk pengelolaan data pasien, kunjungan, pemeriksaan, instruksi aktivitas, serta pemantauan laporan sesuai kewenangan.   | Kesesuaian sistem dengan kebutuhan dan kebijakan klinik.                                   | Tinggi    |
+| Pasien                          | Pengguna aplikasi mobile untuk melihat informasi pribadi, jadwal, instruksi aktivitas, serta mengirim laporan. | Informasi yang jelas, kemudahan penggunaan, dan perlindungan data. | Sedang |
 | Peneliti / Pengembang          | Menganalisis kebutuhan, merancang, membangun, dan menguji sistem.                                      | Kebutuhan dapat diterjemahkan menjadi artefak yang dapat diimplementasikan dan dievaluasi. | Sedang    |
 | Dosen Pembimbing / Penguji     | Memberikan arahan dan menilai kelayakan akademik penelitian.                                           | Kesesuaian masalah, solusi, metode, implementasi, dan evaluasi.                            | Tinggi    |
 
-**Catatan:** Pembagian jabatan, jumlah pengguna, dan kewenangan aktual di Klinik DSH perlu dikonfirmasi. Pemetaan ini merupakan rancangan stakeholder berdasarkan konsep sistem, bukan pernyataan bahwa seluruh pihak tersebut telah dipastikan tersedia.
+**Catatan:** Pembagian peran pengguna merupakan rancangan awal dan perlu dikonfirmasi kepada pihak Klinik DSH. Dalam rancangan sistem ini, pengguna aplikasi dibagi menjadi dua peran utama, yaitu Admin dan Pasien. Peran Admin mencakup pengelolaan sistem dari pihak klinik, termasuk tugas pengelolaan yang dilakukan oleh pemilik klinik apabila tidak terdapat petugas khusus. Sementara itu, pasien umum dan peserta program MHLS merupakan kategori pasien, bukan peran pengguna yang berbeda. Hak akses masing-masing peran akan disesuaikan dengan kebutuhan dan kewenangan aktual yang telah divalidasi bersama pihak klinik.
 
 # 5. Functional Requirements (FR)
 
@@ -182,10 +178,25 @@ Prioritas menggunakan metode MoSCoW:
 2. Event digunakan untuk menyampaikan kejadian bisnis penting antarbagian sistem, bukan menggantikan basis data utama.
 3. Penerbitan event perlu dirancang agar tidak terjadi ketidaksesuaian antara transaksi penyimpanan data dan pengiriman event. Salah satu pendekatan yang dapat digunakan adalah transactional outbox.
 4. Pemrosesan event dan aktivitas yang dapat diulang perlu dirancang secara idempoten agar event duplikat atau retry tidak menyebabkan efek bisnis ganda.
-5. Temporal bertanggung jawab mengelola eksekusi workflow jangka panjang, termasuk timer, waktu tunggu, sinyal laporan pasien, perubahan, pembatalan, dan pemulihan.
+5. Temporal bertanggung jawab mengelola eksekusi workflow monitoring aktivitas mandiri pasien, termasuk timer, waktu tunggu, penerimaan laporan, perubahan instruksi, pembatalan, retry, dan pemulihan workflow. Temporal tidak bertanggung jawab mengelola keseluruhan proses pelayanan klinik, seperti pemeriksaan pasien dan penentuan terapi.
 6. Pengiriman notifikasi dilakukan melalui aktivitas atau layanan notifikasi yang terintegrasi dengan workflow. Status pemicu notifikasi dibedakan dari status penerimaan notifikasi pada perangkat pasien.
 7. Satu instruksi aktivitas dapat memiliki satu workflow utama yang mengelola siklus monitoring instruksi tersebut. Detail implementasi dapat disesuaikan dengan aturan aktivitas yang telah divalidasi.
 8. Pembaruan dan pembatalan instruksi harus mempertimbangkan kondisi workflow saat perubahan diterima, termasuk kemungkinan laporan pasien masuk pada waktu yang bersamaan.
+9. Pemrosesan event harus mempertimbangkan kemungkinan event diterima atau diproses lebih dari satu kali. Consumer perlu menerapkan mekanisme idempotensi agar pemrosesan berulang tidak menghasilkan efek bisnis ganda.
+10. Aktivitas Temporal yang dapat mengalami retry harus dirancang secara idempoten. Efek eksternal, seperti pengiriman notifikasi, juga perlu memiliki mekanisme pencegahan duplikasi karena retry tidak otomatis menjamin efek eksternal hanya terjadi satu kali.
+11. Pemulihan workflow setelah worker mengalami gangguan mengacu pada kemampuan Temporal melanjutkan eksekusi berdasarkan riwayat workflow yang tersimpan ketika worker kembali tersedia. Pemulihan ini tidak secara otomatis menjamin ketersediaan database, Temporal Server, maupun layanan eksternal.
+
+### 5.2 Pengelompokan Functional Requirements Berdasarkan Modul
+
+| Modul | Functional Requirements |
+| :--- | :--- |
+| Modul Pengelolaan Pasien | FR-01 sampai FR-04 |
+| Modul Penjadwalan Kunjungan | FR-05 |
+| Modul Manajemen Pemeriksaan Pasien | FR-06 dan FR-07 |
+| Modul Monitoring Aktivitas Mandiri MHLS | FR-08 sampai FR-16 |
+| Modul Dashboard Perkembangan Pasien Integrasi Event-Driven Architecture dan Temporal | FR-17 sampai FR-28 |
+
+> **Catatan:** Pengelompokan tersebut digunakan untuk memetakan kebutuhan fungsional berdasarkan modul sistem. Integrasi EDA dan Temporal merupakan kebutuhan teknis lintas modul, bukan modul fungsional yang berdiri sendiri.
 
 # 6. Non-Functional Requirements (NFR)
 
@@ -230,32 +241,36 @@ Namun, detail mengenai cara pemberian instruksi, pengiriman pengingat, penerimaa
 
 ## 7.2 To-Be (Kondisi yang Diusulkan)
 
-Petugas mengelola data pasien, kunjungan, hasil pemeriksaan, dan instruksi aktivitas melalui aplikasi web. Pasien menggunakan aplikasi mobile untuk melihat instruksi dan mengirim laporan pelaksanaan aktivitas.
+Petugas mengelola data pasien melalui aplikasi web, termasuk pencatatan identitas pasien, kategori pasien, jadwal kunjungan, dan riwayat pemeriksaan. Hasil pemeriksaan dan tindakan terapi yang diberikan oleh pihak klinik dicatat ke dalam sistem agar dapat ditelusuri sebagai bagian dari riwayat perkembangan pasien.
 
-Ketika instruksi aktivitas dibuat, backend menyimpan data ke basis data. Setelah transaksi berhasil, sistem menerbitkan event yang mewakili kejadian pembuatan instruksi. Komponen penerima event memproses kejadian tersebut dan memulai workflow Temporal berdasarkan identitas instruksi.
+Untuk pasien program MHLS, pihak klinik yang berwenang dapat membuat instruksi aktivitas mandiri berdasarkan kebutuhan pasien. Instruksi tersebut disimpan bersama informasi jadwal, frekuensi, tanggal mulai, periode, dan keterangan aktivitas. Pasien menggunakan aplikasi mobile untuk melihat instruksi dan menyampaikan laporan pelaksanaan aktivitas.
 
-Workflow mengelola jadwal dan waktu tunggu sesuai aturan aktivitas. Ketika waktu pengingat tercapai, workflow menjalankan aktivitas pengiriman notifikasi. Pasien kemudian dapat melihat instruksi dan menyampaikan laporan melalui aplikasi mobile.
+EDA digunakan untuk menyampaikan kejadian bisnis yang relevan antarbagian sistem, seperti pencatatan pemeriksaan, pembuatan instruksi, perubahan instruksi, pembatalan instruksi, dan penerimaan laporan pasien. Pemrosesan event dilakukan agar komponen sistem dapat menjalankan tindakan yang sesuai dengan kejadian tersebut.
 
-Ketika laporan diterima, backend memvalidasi dan menyimpan laporan ke basis data. Setelah laporan tersimpan, sistem meneruskan informasi laporan kepada workflow melalui mekanisme komunikasi yang sesuai, sehingga workflow dapat melanjutkan tahapan berikutnya.
+Khusus pada monitoring aktivitas mandiri, event pembuatan instruksi digunakan untuk memulai workflow Temporal. Workflow mengelola jadwal, timer, pengingat, waktu tunggu laporan, dan kelanjutan proses berdasarkan laporan yang diterima. Jika instruksi diperbarui atau dibatalkan, perubahan tersebut diteruskan kepada workflow agar proses yang berjalan dapat disesuaikan.
 
-Jika instruksi diperbarui, sistem menyampaikan perubahan tersebut agar workflow menyesuaikan jadwal atau proses yang masih berlaku. Jika instruksi dibatalkan, workflow dihentikan atau dibatalkan secara terkendali berdasarkan aturan yang telah ditentukan.
-
-Apabila worker mengalami gangguan, Temporal dapat melanjutkan eksekusi workflow berdasarkan riwayat eksekusi yang tersimpan ketika worker kembali tersedia. Petugas dapat meninjau data monitoring, laporan, perubahan instruksi, dan status workflow sesuai hak akses.
+Apabila worker mengalami gangguan, Temporal dapat melanjutkan eksekusi workflow berdasarkan riwayat eksekusi yang tersimpan ketika worker kembali tersedia. Petugas dapat memantau informasi pasien, kunjungan, pemeriksaan, instruksi, laporan, dan status aktivitas melalui aplikasi web, sedangkan pasien dapat melihat informasi yang berkaitan dengan dirinya melalui aplikasi mobile.
 
 ## 7.3 Alur Utama To-Be
 
-1. Petugas membuat instruksi aktivitas pasien melalui aplikasi web.
-2. Backend menyimpan instruksi ke basis data.
-3. Sistem menerbitkan event setelah transaksi penyimpanan berhasil.
-4. Consumer menerima event dan memulai workflow Temporal.
-5. Workflow mengatur timer berdasarkan jadwal aktivitas.
-6. Ketika jadwal tercapai, workflow menjalankan aktivitas pengiriman pengingat.
-7. Pasien melihat instruksi dan mengirim laporan melalui aplikasi mobile.
-8. Backend menyimpan laporan dan meneruskan informasi laporan kepada workflow.
-9. Workflow melanjutkan proses sesuai aturan aktivitas.
-10. Jika instruksi berubah atau dibatalkan, sistem menyampaikan perubahan kepada workflow.
-11. Jika terjadi gangguan pada worker, workflow dapat dilanjutkan setelah worker tersedia kembali.
-12. Petugas meninjau riwayat monitoring dan status aktivitas pasien.
+1. Petugas membuat atau memperbarui data pasien melalui aplikasi web.
+2. Pasien menjalani pemeriksaan sesuai proses pelayanan klinik.
+3. Petugas mencatat hasil pemeriksaan dan tindakan terapi yang diberikan.
+4. Petugas mencatat jadwal kunjungan berikutnya.
+5. Pihak klinik yang berwenang membuat instruksi aktivitas mandiri pasien MHLS apabila diperlukan.
+6. Backend menyimpan instruksi ke basis data.
+7. Sistem menerbitkan event setelah transaksi penyimpanan berhasil.
+8. Consumer menerima event dan memulai workflow Temporal untuk monitoring instruksi aktivitas mandiri.
+9. Workflow mengelola timer, jadwal pengingat, dan waktu tunggu laporan pasien.
+10. Pasien melihat instruksi dan mengirim laporan melalui aplikasi mobile.
+11. Backend menyimpan laporan dan meneruskan informasi laporan kepada workflow.
+12. Workflow melanjutkan proses sesuai aturan aktivitas yang telah ditetapkan.
+13. Jika instruksi berubah atau dibatalkan, sistem menyampaikan perubahan tersebut kepada workflow.
+14. Jika terjadi gangguan pada worker, workflow dapat dilanjutkan setelah worker tersedia kembali.
+15. Petugas memantau riwayat kunjungan, pemeriksaan, instruksi, laporan, dan perkembangan pasien melalui aplikasi web.
+16. Pasien kembali menjalani kunjungan dan pemeriksaan berikutnya sesuai jadwal yang ditentukan pihak klinik.
+
+**Catatan:** Temporal tetap hanya menjalankan workflow monitoring aktivitas mandiri pada langkah 8–14. Langkah lainnya merupakan proses sistem monitoring secara keseluruhan.
 
 ## 7.4 Perbandingan As-Is dan To-Be
 
@@ -374,24 +389,32 @@ Sistem dinyatakan **BERHASIL** apabila:
 
 **F. Evaluasi**
 
-- Seluruh skenario pengujian prioritas Must telah dijalankan dan hasilnya terdokumentasi.
+-  skenario pengujian prioritas Must telah dijalankan dan hasilnya terdokumentasi.
 - Target NFR yang telah ditetapkan dievaluasi pada lingkungan pengujian yang didokumentasikan.
-- Jika evaluasi komparatif dilaksanakan, kedua pendekatan diuji menggunakan skenario dan kondisi pengujian yang setara.
+- Pengujian workflow mencakup skenario normal, event duplikat, retry, perubahan instruksi, pembatalan, dan pemulihan worker.
+- Evaluasi usability dilakukan menggunakan kuesioner System Usability Scale (SUS) kepada pengguna yang telah mencoba aplikasi.
+- Hasil evaluasi SUS disajikan dalam bentuk tabel perhitungan skor dan interpretasi hasil berdasarkan ketentuan SUS.
 
 ## 10.2 Skenario Pengujian Utama
 
-| ID    | Skenario                                                          | Hasil yang Diharapkan                                                                                                     |
-| ----- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| TC-01 | Petugas membuat instruksi aktivitas baru.                         | Data tersimpan dan event pembuatan instruksi diproses hingga workflow dimulai.                                            |
-| TC-02 | Workflow mencapai waktu pengingat.                                | Aktivitas pengiriman notifikasi dipicu sesuai jadwal yang dikonfigurasi.                                                  |
-| TC-03 | Pasien mengirim laporan aktivitas.                                | Laporan tersimpan, terhubung dengan instruksi, dan diteruskan kepada workflow.                                            |
-| TC-04 | Worker dihentikan ketika workflow sedang menunggu.                | Workflow dapat dilanjutkan setelah worker tersedia kembali tanpa kehilangan state workflow yang telah tercatat.           |
-| TC-05 | Event instruksi yang sama diproses lebih dari satu kali.          | Tidak terjadi efek bisnis ganda.                                                                                          |
-| TC-06 | Petugas memperbarui jadwal instruksi yang masih aktif.            | Data instruksi diperbarui dan workflow menyesuaikan jadwal berdasarkan aturan perubahan.                                  |
-| TC-07 | Petugas membatalkan instruksi yang masih aktif.                   | Instruksi berubah menjadi dibatalkan dan workflow tidak menjalankan tahapan berikutnya yang sudah tidak berlaku.          |
-| TC-08 | Aktivitas pengiriman notifikasi mengalami kegagalan.              | Kegagalan tercatat dan retry atau penanganan lanjutan berjalan sesuai kebijakan.                                          |
-| TC-09 | Laporan pasien dan perubahan instruksi terjadi hampir bersamaan.  | Sistem menerapkan aturan konsistensi sehingga laporan dan perubahan diproses tanpa menghasilkan status yang bertentangan. |
-| TC-10 | Kode workflow mengalami perubahan ketika terdapat workflow aktif. | Workflow yang masih berjalan tetap dapat diproses sesuai strategi kompatibilitas dan versioning yang diterapkan.          |
+
+| ID | Skenario | Hasil yang Diharapkan |
+| --- | --- | --- |
+| **TC-01** | Petugas membuat instruksi aktivitas baru. | Data tersimpan dan event pembuatan instruksi diproses hingga workflow dimulai. |
+| **TC-02** | Workflow mencapai waktu pengingat. | Aktivitas pengiriman notifikasi dipicu sesuai jadwal yang dikonfigurasi. |
+| **TC-03** | Pasien mengirim laporan aktivitas. | Laporan tersimpan, terhubung dengan instruksi, dan diteruskan kepada workflow. |
+| **TC-04** | Worker dihentikan ketika workflow sedang menunggu. | Workflow dapat dilanjutkan setelah worker tersedia kembali tanpa kehilangan state workflow yang telah tercatat. |
+| **TC-05** | Event instruksi yang sama diproses lebih dari satu kali. | Tidak terjadi efek bisnis ganda. |
+| **TC-06** | Petugas memperbarui jadwal instruksi yang masih aktif. | Data instruksi diperbarui dan workflow menyesuaikan jadwal berdasarkan aturan perubahan. |
+| **TC-07** | Petugas membatalkan instruksi yang masih aktif. | Instruksi berubah menjadi dibatalkan dan workflow tidak menjalankan tahapan berikutnya yang sudah tidak berlaku. |
+| **TC-08** | Aktivitas pengiriman notifikasi mengalami kegagalan. | Kegagalan tercatat dan retry atau penanganan lanjutan berjalan sesuai kebijakan. |
+| **TC-09** | Laporan pasien dan perubahan instruksi terjadi hampir bersamaan. | Sistem menerapkan aturan konsistensi sehingga laporan dan perubahan diproses tanpa menghasilkan status yang bertentangan. |
+| **TC-10** | Kode workflow mengalami perubahan ketika terdapat workflow aktif. | Workflow yang masih berjalan tetap dapat diproses sesuai strategi kompatibilitas dan versioning yang diterapkan. |
+| **TC-11** | Event instruksi yang sama diterima dan diproses lebih dari satu kali. | Consumer hanya menghasilkan satu efek bisnis sesuai instruksi dan tidak membuat workflow atau tindakan ganda. |
+| **TC-12** | Aktivitas pengiriman notifikasi mengalami kegagalan sementara. | Kegagalan tercatat dan aktivitas dijalankan kembali melalui mekanisme retry sesuai kebijakan. |
+| **TC-13** | Instruksi diperbarui ketika workflow masih berjalan. | Workflow menerapkan perubahan instruksi dan tidak menjalankan jadwal lama yang sudah tidak berlaku. |
+| **TC-14** | Laporan pasien diterima bersamaan dengan perubahan instruksi. | Sistem menerapkan aturan konsistensi yang ditentukan sehingga laporan dan perubahan instruksi tidak menghasilkan status yang bertentangan. |
+| **TC-15** | Worker dihentikan ketika workflow sedang berjalan, kemudian dijalankan kembali. | Workflow dapat melanjutkan eksekusi berdasarkan riwayat yang tersimpan tanpa kehilangan state workflow. |
 
 ## 10.3 Kriteria Belum Diterima
 
